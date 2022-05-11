@@ -16,14 +16,6 @@ public:
 	}
 };
 
-class AppRender : public Render
-{
-public:
-	bool Init(HWND nwnd) { return true; }
-	bool Draw() { return true; }
-	void Close() {}
-};
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	Framework framework;
