@@ -24,7 +24,7 @@ bool Framework::Init()
 	if (!m_wnd->Create(desc)) return false;
 	m_wnd->SetInputManager(m_input);
 
-	if (!m_render->Init(m_wnd->GetHWND())) return false;
+	if (!m_render->CreateDevice(m_wnd->GetHWND())) return false;
 
 	m_init = true;
 	return true;
@@ -43,8 +43,10 @@ bool Framework::m_frame()
 	{
 	}
 
+	m_render->BeginFrame();
 	if (!m_render->Draw())
 		return false;
+	m_render->EndFrame();
 
 	return true;
 }
@@ -52,7 +54,8 @@ bool Framework::m_frame()
 void Framework::Close()
 {
 	m_init = false;
-	_CLOSE(m_render);
+	m_render->Shutdown();
+	_DELETE(m_render);
 	_CLOSE(m_wnd);
 	_CLOSE(m_input);
 }

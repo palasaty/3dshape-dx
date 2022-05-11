@@ -12,6 +12,7 @@
 #include <d3d11.h>
 
 #pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3dcompiler.lib")
 
 #define _DELETE(p)		    { if(p) { delete (p);    (p) = nullptr;} }
 #define _DELETE_ARRAY(p)	{ if(p) { delete[] (p);  (p) = nullptr;} }
