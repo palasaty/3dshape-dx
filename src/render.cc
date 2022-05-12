@@ -1,5 +1,6 @@
 #include "render.h"
 #include <d3dcompiler.h>
+#include <vector>
 
 
 Render::Render()
@@ -156,6 +157,49 @@ HRESULT AppRender::m_compileshaderfromfile(WCHAR* FileName, LPCSTR EntryPoint, L
 	return hr;
 }
 
+using VertexCollection = std::vector<SimpleVertex>;
+using IndexCollection = std::vector<WORD>;
+
+VertexCollection computeVertices() {
+	VertexCollection vertices =
+	{
+		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) }
+	};
+
+	return vertices;
+}
+
+IndexCollection computeIndices() {
+	IndexCollection indices =
+	{
+		3,1,0,
+		2,1,3,
+
+		0,5,4,
+		1,5,0,
+
+		3,4,7,
+		0,4,3,
+
+		1,6,5,
+		2,6,1,
+
+		2,7,6,
+		3,7,2,
+
+		6,4,5,
+		7,4,6,
+	};
+	return indices;
+}
+
 bool AppRender::Init(HWND hwnd)
 {
 	HRESULT hr = S_OK;
@@ -191,6 +235,7 @@ bool AppRender::Init(HWND hwnd)
 	hr = m_compileshaderfromfile(const_cast<WCHAR*>(name.c_str()), "PS", "ps_4_0", &pPSBlob);
 	if (FAILED(hr)) return false;
 
+
 	hr = m_pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pPixelShader);
 	_RELEASE(pPSBlob);
 	if (FAILED(hr))
@@ -198,18 +243,6 @@ bool AppRender::Init(HWND hwnd)
 		_RELEASE(pPSBlob);
 		return false;
 	}
-
-	SimpleVertex vertices[] =
-	{
-		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) }
-	};
 
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
@@ -220,7 +253,8 @@ bool AppRender::Init(HWND hwnd)
 
 	D3D11_SUBRESOURCE_DATA Data;
 	ZeroMemory(&Data, sizeof(Data));
-	Data.pSysMem = vertices;
+	VertexCollection vertices = computeVertices();
+	Data.pSysMem = vertices.data();
 
 	hr = m_pd3dDevice->CreateBuffer(&bd, &Data, &m_pVertexBuffer);
 	if (FAILED(hr))
@@ -230,31 +264,12 @@ bool AppRender::Init(HWND hwnd)
 	UINT offset = 0;
 	m_pImmediateContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
 
-	WORD indices[] =
-	{
-		3,1,0,
-		2,1,3,
-
-		0,5,4,
-		1,5,0,
-
-		3,4,7,
-		0,4,3,
-
-		1,6,5,
-		2,6,1,
-
-		2,7,6,
-		3,7,2,
-
-		6,4,5,
-		7,4,6,
-	};
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(WORD) * 36;
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	bd.CPUAccessFlags = 0;
-	Data.pSysMem = indices;
+	IndexCollection indices = computeIndices();
+	Data.pSysMem = indices.data();
 	hr = m_pd3dDevice->CreateBuffer(&bd, &Data, &m_pIndexBuffer);
 	if (FAILED(hr))
 		return false;
