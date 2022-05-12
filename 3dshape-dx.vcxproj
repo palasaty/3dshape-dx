@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="include\common.h" />
     <ClInclude Include="include\framework.h" />
+    <ClInclude Include="include\geometry.h" />
     <ClInclude Include="include\input_codes.h" />
     <ClInclude Include="include\input_listener.h" />
     <ClInclude Include="include\input_manager.h" />
@@ -29,6 +30,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\framework.cc" />
+    <ClCompile Include="src\geometry.cc" />
     <ClCompile Include="src\input_manager.cc" />
     <ClCompile Include="src\main.cc" />
     <ClCompile Include="src\render.cc" />

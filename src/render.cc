@@ -1,6 +1,7 @@
 #include "render.h"
 #include <d3dcompiler.h>
 #include <vector>
+#include "geometry.h"
 
 
 Render::Render()
@@ -115,12 +116,6 @@ void Render::Shutdown()
 	_RELEASE(m_pd3dDevice);
 }
 
-struct SimpleVertex
-{
-	XMFLOAT3 Pos;
-	XMFLOAT4 Color;
-};
-
 struct ConstantBuffer
 {
 	XMMATRIX mWorld;
@@ -155,49 +150,6 @@ HRESULT AppRender::m_compileshaderfromfile(WCHAR* FileName, LPCSTR EntryPoint, L
 	_RELEASE(pErrorBlob);
 
 	return hr;
-}
-
-using VertexCollection = std::vector<SimpleVertex>;
-using IndexCollection = std::vector<WORD>;
-
-VertexCollection computeVertices() {
-	VertexCollection vertices =
-	{
-		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) }
-	};
-
-	return vertices;
-}
-
-IndexCollection computeIndices() {
-	IndexCollection indices =
-	{
-		3,1,0,
-		2,1,3,
-
-		0,5,4,
-		1,5,0,
-
-		3,4,7,
-		0,4,3,
-
-		1,6,5,
-		2,6,1,
-
-		2,7,6,
-		3,7,2,
-
-		6,4,5,
-		7,4,6,
-	};
-	return indices;
 }
 
 bool AppRender::Init(HWND hwnd)
@@ -244,17 +196,23 @@ bool AppRender::Init(HWND hwnd)
 		return false;
 	}
 
+	VertexCollection v;
+	IndexCollection ind;
+	float d = 4;
+	float h = 5;
+	int n = 6;
+	computeCone(v, ind, d, h, n);
+
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(SimpleVertex) * 8;
+	bd.ByteWidth = sizeof(SimpleVertex) * v.size();
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 
 	D3D11_SUBRESOURCE_DATA Data;
 	ZeroMemory(&Data, sizeof(Data));
-	VertexCollection vertices = computeVertices();
-	Data.pSysMem = vertices.data();
+	Data.pSysMem = v.data();
 
 	hr = m_pd3dDevice->CreateBuffer(&bd, &Data, &m_pVertexBuffer);
 	if (FAILED(hr))
@@ -265,11 +223,10 @@ bool AppRender::Init(HWND hwnd)
 	m_pImmediateContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
 
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(WORD) * 36;
+	bd.ByteWidth = sizeof(WORD) * ind.size();
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	bd.CPUAccessFlags = 0;
-	IndexCollection indices = computeIndices();
-	Data.pSysMem = indices.data();
+	Data.pSysMem = ind.data();
 	hr = m_pd3dDevice->CreateBuffer(&bd, &Data, &m_pIndexBuffer);
 	if (FAILED(hr))
 		return false;
@@ -287,13 +244,13 @@ bool AppRender::Init(HWND hwnd)
 
 	m_World = XMMatrixIdentity();
 
-	XMVECTOR Eye = XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f);
+	XMVECTOR Eye = XMVectorSet(-6.0f, 1.0f, -3.0f, 1.0f);
 	XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	m_View = XMMatrixLookAtLH(Eye, At, Up);
 
-	float width = 640.0f;
-	float height = 480.0f;
+	float width = 840.0f;
+	float height = 580.0f;
 	m_Projection = XMMatrixPerspectiveFovLH(XM_PIDIV2, width / height, 0.01f, 100.0f);
 
 	return true;

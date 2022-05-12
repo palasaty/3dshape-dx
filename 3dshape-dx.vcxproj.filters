@@ -36,6 +36,9 @@
     <ClInclude Include="include\window.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="include\geometry.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\framework.cc">
@@ -51,6 +54,9 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="src\render.cc">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="src\geometry.cc">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

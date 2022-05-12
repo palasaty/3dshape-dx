@@ -1,6 +1,5 @@
 #pragma once
 #include "common.h"
-#include <directxmath.h>
 
 using namespace DirectX;
 
