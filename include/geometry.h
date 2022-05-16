@@ -18,4 +18,4 @@ struct SimpleVertex
 using VertexCollection = std::vector<SimpleVertex>;
 using IndexCollection = std::vector<WORD>;
 
-void computeCone(VertexCollection& v, IndexCollection& i, float d, float h, size_t n);
+void computeCylinder(VertexCollection& v, IndexCollection& i, float d, float h, size_t n);

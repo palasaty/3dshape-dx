@@ -201,7 +201,7 @@ bool AppRender::Init(HWND hwnd)
 	float d = 4;
 	float h = 5;
 	int n = 6;
-	computeCone(v, ind, d, h, n);
+	computeCylinder(v, ind, d, h, n);
 
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));

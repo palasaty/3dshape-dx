@@ -1,11 +1,11 @@
 #include "geometry.h"
 #include <stdexcept>
 
-void computeCap(VertexCollection& v, IndexCollection& i, size_t n, float h, float r);
+void computeCap(VertexCollection& v, IndexCollection& i, size_t n, float h, float r, bool top);
 XMVECTOR computeCircleVector(size_t i, size_t n) noexcept;
 XMVECTOR computeCircleTangent(size_t i, size_t tessellation) noexcept;
 
-void computeCone(VertexCollection& v, IndexCollection& ind, float d, float h, size_t n) {
+void computeCylinder(VertexCollection& v, IndexCollection& ind, float d, float h, size_t n) {
     v.clear();
     ind.clear();
 
@@ -21,30 +21,26 @@ void computeCone(VertexCollection& v, IndexCollection& ind, float d, float h, si
 
     for (size_t i = 0; i <= n; i++)
     {
-        const XMVECTOR circlevec = computeCircleVector(i, n);
+        const XMVECTOR normal = computeCircleVector(i, n);
+        const XMVECTOR sideOffset = XMVectorScale(normal, radius);
 
-        const XMVECTOR sideOffset = XMVectorScale(circlevec, radius);
+        //const float u = float(i) / float(n);
+        //const XMVECTOR textureCoordinate = XMLoadFloat(&u);
 
-        const float u = float(i) / float(n);
+        v.emplace_back(XMVectorAdd(sideOffset, topOffset), normal/*, textureCoordinate*/);
+        v.emplace_back(XMVectorSubtract(sideOffset, topOffset), normal/*, XMVectorAdd(textureCoordinate, g_XMIdentityR1)*/);
 
-        const XMVECTOR textureCoordinate = XMLoadFloat(&u);
+        ind.push_back(i*2);
+        ind.push_back((i * 2 + 2) % (stride * 2));
+        ind.push_back(i*2 + 1);
 
-        const XMVECTOR pt = XMVectorSubtract(sideOffset, topOffset);
-
-        XMVECTOR normal = XMVector3Cross(
-            computeCircleTangent(i, n),
-            XMVectorSubtract(topOffset, pt));
-        normal = XMVector3Normalize(normal);
-
-        v.emplace_back(topOffset, normal/* g_XMZero)*/);
-        v.emplace_back( pt, normal  /*, XMVectorAdd(textureCoordinate, g_XMIdentityR1))*/);
-
-        ind.push_back(i * 2);
+        ind.push_back(i * 2 + 1);
+        ind.push_back((i * 2 + 2) % (stride * 2));
         ind.push_back((i * 2 + 3) % (stride * 2));
-        ind.push_back((i * 2 + 1) % (stride * 2));
     }
 
-    computeCap(v, ind, n, h, radius);
+    computeCap(v, ind, n, h, radius, true);
+    computeCap(v, ind, n, h, radius, false);
 }
 
 inline XMVECTOR computeCircleTangent(size_t i, size_t n) noexcept
@@ -69,12 +65,15 @@ inline XMVECTOR computeCircleVector(size_t i, size_t n) noexcept
     return v;
 }
 
-void computeCap(VertexCollection& v, IndexCollection& ind, size_t n, float h, float r)
+void computeCap(VertexCollection& v, IndexCollection& ind, size_t n, float h, float r, bool top)
 {
     for (size_t i = 0; i < n - 2; i++)
     {
         size_t i1 = (i + 1) % n;
         size_t i2 = (i + 2) % n;
+
+        if (top)
+            std::swap(i1, i2);
 
         const size_t vbase = v.size();
         ind.push_back(vbase);
@@ -85,8 +84,10 @@ void computeCap(VertexCollection& v, IndexCollection& ind, size_t n, float h, fl
     XMVECTOR normal = g_XMIdentityR1;
     XMVECTOR textureScale = g_XMNegativeOneHalf;
 
-    normal = XMVectorNegate(normal);
-    textureScale = XMVectorMultiply(textureScale, g_XMNegateX);
+    if (!top) {
+        normal = XMVectorNegate(normal);
+        textureScale = XMVectorMultiply(textureScale, g_XMNegateX);
+    }
 
 
     for (size_t i = 0; i < n; i++)
