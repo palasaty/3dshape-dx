@@ -94,7 +94,7 @@ bool Render::CreateDevice(HWND hwnd)
 
 void Render::BeginFrame()
 {
-	float ClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f };
+	float ClearColor[4] = { 0.0f, 0.125f, 0.3f, 0.6f };
 	m_pImmediateContext->ClearRenderTargetView(m_pRenderTargetView, ClearColor);
 }
 
@@ -171,6 +171,7 @@ bool AppRender::Init(HWND hwnd)
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 	UINT numElements = ARRAYSIZE(layout);
@@ -198,9 +199,10 @@ bool AppRender::Init(HWND hwnd)
 
 	VertexCollection v;
 	IndexCollection ind;
-	float d = 4;
-	float h = 5;
-	int n = 6;
+	float d = 5;
+	float h = 7;
+	int n = 4;
+	//int m = 40;
 	computeCylinder(v, ind, d, h, n);
 
 	D3D11_BUFFER_DESC bd;
@@ -244,14 +246,14 @@ bool AppRender::Init(HWND hwnd)
 
 	m_World = XMMatrixIdentity();
 
-	XMVECTOR Eye = XMVectorSet(-6.0f, 1.0f, -3.0f, 1.0f);
-	XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	XMVECTOR Eye = XMVectorSet(0.0f, -15.0f, -10.0f, 0.0f);
+	XMVECTOR At = XMVectorSet(0.0f,0.0f, 0.0f, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	m_View = XMMatrixLookAtLH(Eye, At, Up);
 
-	float width = 840.0f;
-	float height = 580.0f;
-	m_Projection = XMMatrixPerspectiveFovLH(XM_PIDIV2, width / height, 0.01f, 100.0f);
+	float width = 640.0f;
+	float height = 480.0f;
+	m_Projection = XMMatrixPerspectiveFovLH(1.2/*XM_PIDIV2*/, width / height, 0.1f, 1000.0f);
 
 	return true;
 }

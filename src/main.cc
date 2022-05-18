@@ -12,7 +12,7 @@ public:
 	bool MouseMove(const MouseEvent& arg)
 	{
 		printf("mouse %d - %d\n", arg.x, arg.y);
-		return false;
+		return true;
 	}
 };
 

@@ -2,6 +2,7 @@
 #include <stdexcept>
 
 void computeCap(VertexCollection& v, IndexCollection& i, size_t n, float h, float r, bool top);
+void computeCapNew(VertexCollection& v, IndexCollection& ind, float r, float h, UINT n, bool top);
 XMVECTOR computeCircleVector(size_t i, size_t n) noexcept;
 XMVECTOR computeCircleTangent(size_t i, size_t tessellation) noexcept;
 
@@ -100,4 +101,88 @@ void computeCap(VertexCollection& v, IndexCollection& ind, size_t n, float h, fl
 
         v.emplace_back(position, normal/*, textureCoordinate*/ );
     }
+}
+
+void computeCylinderNew(VertexCollection& v, IndexCollection& ind, float d, float h, size_t n, size_t m)
+{
+	v.clear();
+	ind.clear();
+
+	float stackHeight = h / n;
+	UINT mm = m + 1;
+	const float r = d / 2;
+
+	for (UINT i = 0; i < mm; ++i)
+	{
+		float y = -0.5f * h + i * stackHeight;
+
+		float dTheta = 2.0f * XM_PI / n;
+		for (UINT j = 0; j <= n; ++j)
+		{
+			float c = cosf(j * dTheta);
+			float s = sinf(j * dTheta);
+
+            XMFLOAT3 pos(r * c, y, r * s);
+		    XMFLOAT3 tangentU(-s, 0.0f, c);
+			XMFLOAT3 bitangent(0, -h, 0);
+
+			XMVECTOR T = XMLoadFloat3(&tangentU);
+			XMVECTOR B = XMLoadFloat3(&bitangent);
+			XMVECTOR N = XMVector3Normalize(XMVector3Cross(T, B));
+
+			v.emplace_back(XMLoadFloat3(&pos), N);
+		}
+	}
+
+	UINT nn = n + 1;
+
+	for (UINT i = 0; i < m; ++i)
+	{
+		for (UINT j = 0; j < n; ++j)
+		{
+			ind.push_back(i * nn + j);
+			ind.push_back((i + 1) * nn + j);
+			ind.push_back((i + 1) * nn + j + 1);
+
+			ind.push_back(i * nn + j);
+			ind.push_back((i + 1) * nn + j + 1);
+			ind.push_back(i * nn + j + 1);
+		}
+	}
+
+    computeCapNew(v, ind, r, h, n, true);
+    computeCapNew(v, ind, r, h, n, false);
+}
+
+void computeCapNew(VertexCollection& v, IndexCollection& ind, float r, float h, UINT n, bool top) {
+
+	UINT baseIndex = (UINT)v.size();
+	float y = -0.5f * h;
+
+	float dTheta = 2.0f * XM_PI / n;
+	for (UINT i = 0; i <= n; ++i)
+	{
+		float x = r * cosf(i * dTheta);
+		float z = r * sinf(i * dTheta);
+
+        v.emplace_back(XMFLOAT3(x, y, z), XMFLOAT3(0, top ? 1 : -1, 0));
+	}
+
+    v.emplace_back(XMFLOAT3(0.0, y, 0.0), XMFLOAT3(0, top ? 1 : -1, 0));
+
+	UINT centerIndex = (UINT)v.size() - 1;
+
+	for (UINT i = 0; i < n; ++i)
+	{
+		ind.push_back(centerIndex);
+        
+        if (!top) {
+            ind.push_back(baseIndex + i);
+            ind.push_back(baseIndex + i + 1);
+        }
+        else {
+            ind.push_back(baseIndex + i + 1);
+            ind.push_back(baseIndex + i);
+        }
+	}
 }
